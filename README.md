@@ -8,6 +8,9 @@ A small Windows desktop utility for **Phantom Blade Zero** Steam achievements (A
 
 ## Features
 
+- Dark cards with actual Steam achievement icons, names and descriptions; responsive one/two-column layout.
+- Search by name, description or ID; filter locked/unlocked entries. Checked selections persist across filters.
+- Each card opens short guide reminders, missable markers and an attributed link to [Nero's Steam guide](https://steamcommunity.com/sharedfiles/filedetails/?id=3829337248). Full routes remain on the source page. The guide is a work in progress, updated November 1, 2026; its claims may become outdated.
 - Read all 66 achievements and show the connected Steam account.
 - Unlock checked achievements or unlock all remaining achievements with one click.
 - Wait for Steam's successful `UserStatsStored_t` callback, then read back each submitted achievement.
@@ -19,13 +22,17 @@ A small Windows desktop utility for **Phantom Blade Zero** Steam achievements (A
 2. Start Steam and sign into an account with access to the game.
 3. Run `PBZAchievementTool.exe` normally, without administrator privileges.
 4. Select **Browse**, then choose `steam_api64.dll` from your Phantom Blade Zero installation. For example: `PBZ/steam_api64.dll` or `PBZ/platform/steam/steam_api64.dll`. Only select a library from your trusted game installation: this loads native code.
-5. Click **Connect**, check the displayed Steam account, then use **Unlock selected** or **Unlock all**.
+5. Click **Connect Steam**, check the displayed account, then use a card's **Unlock** button, **Unlock selected** or **Unlock all remaining**. Unlock all applies to every remaining achievement, regardless of search/filter.
 
 The game itself does not need to be running. Unlock buttons change the connected account immediately; the tool does not provide achievement reset. Already unlocked entries are skipped. If Steam does not confirm the save, the application reports an error rather than claiming success. After a timeout, reconnect before retrying.
 
 The interface language selector translates the application controls. Achievement names come from Steam and follow Steam's game language, which may differ from the interface language.
 
 ## Build
+
+Version 1.1 reads icons via SteamUtils v011. Icons load from Steam at runtime; no individual game icon assets are bundled. Missing icons display an ID placeholder and retry while connected. Achievement text follows Steam's language; application controls and guide reminders support all three interface languages.
+
+Version 1.1 validation: build passed; read-only integration returned 66 states and 66 icons. Three-language UI checks passed for filtering, search, empty states, selection persistence, narrow layouts and preventing writes in preview mode. Guide layout was visually inspected. No achievements were modified during these tests. Bulk writes remain untested on an incomplete account.
 
 Requires Windows x64 and .NET Framework 4.5 or newer (4.8 recommended). No NuGet packages are required.
 
