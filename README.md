@@ -69,3 +69,11 @@ On normal startup, the tool reads the Steam registry location and libraryfolders
 ## v1.3 — Minimal light interface
 
 A ChatGPT-inspired light workspace with left navigation, rounded buttons and neutral colors. The sidebar collapses on narrow windows. Steam auto-connect, achievement cards, guides and all three languages remain available. This is an independent PBZ community tool, not an OpenAI product.
+
+## v1.4 — Steam-style collection, 15 languages, loading feedback
+
+The new collection uses blue-black gradient cards, enlarged real achievement icons, subtle artwork watermarks, hover highlights and colored completion markers. Loading now has an animated progress strip and per-batch counts; data loading yields to the UI thread.
+
+Language menus no longer dispose themselves during their own close/click event. Selection is queued until the menu event returns. Regression checks cover 15 locales, menu selection, animated frame advancement, filters, selection persistence and narrow layouts; a read-only connected Steam test switched language and filter menus 30 times each without crashing. The original user crash was not captured in the Windows event log, so this fixes the identified menu lifecycle hazard rather than claiming a verified stack trace match.
+
+Supported UI locales match the [Steam store language list](https://store.steampowered.com/app/4115450/), checked November 12, 2026: English, Simplified Chinese, Traditional Chinese, French, German, Spanish (Spain), Spanish (Latin America), Russian, Japanese, Portuguese (Brazil), Portuguese (Portugal), Korean, Italian, Thai and Vietnamese. Tool translations are community-authored, not official game translations; regional Spanish and Portuguese variants share the main interface wording. Achievement text remains in the Steam game language. The four specific guide reminders remain in English/Chinese; other locales show a translated prompt to consult the original guide.

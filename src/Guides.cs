@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
@@ -8,7 +8,7 @@ static class Guides {
  public const string Url="https://steamcommunity.com/sharedfiles/filedetails/?id=3829337248";
  public static bool Missable(string id){return Array.IndexOf(new[]{"ACH_013","ACH_032","ACH_034","ACH_035","ACH_036","ACH_037","ACH_038"},id)>=0;}
  static string Hint(string id){
-  switch(id){
+  if(Texts.Language>=3)return Texts.T("See the original guide for the route and quest steps.","","");switch(id){
    case "ACH_038":return Texts.T("Finish the herb quest before Jing Ye; the healing quest before Bai Chilian.","草药任务须在击败荆夜前完成；救治任务须在击败白赤练前完成。","草藥任務須在擊敗荊夜前完成；救治任務須在擊敗白赤練前完成。");
    case "ACH_034":return Texts.T("Accept the quest before Bai Chilian.","击败白赤练前接取任务。","擊敗白赤練前接取任務。");
    case "ACH_028":return Texts.T("Defeat You Loong in Meigu Lake.","需要击败媚骨湖版本的游龙帮主。","需要擊敗媚骨湖版本的游龍幫主。");
@@ -32,3 +32,4 @@ static class Guides {
  }
 }
 }
+

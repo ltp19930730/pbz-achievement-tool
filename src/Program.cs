@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PBZAchievements {
-static class Texts {
+static partial class Texts {
  public static int Language=0;
- public static string T(string en,string zh,string tw){return Language==1?zh:Language==2?tw:en;}
+ public static string T(string en,string zh,string tw){return Language==1?zh:Language==2?tw:Localize(en);}
 }
 static partial class Native {
  const string D="steam_api64.dll";
@@ -61,12 +61,15 @@ static class Program {
   }
   Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
   if(args.Length==3&&args[0]=="--preview-guide"){Texts.Language=int.Parse(args[2]);Guides.Show(null,new Achievement{Id="ACH_038",Name="The Healer’s Legacy",Description="Complete [Flesh Lily], [Apprentice Healer], and [A Healer’s Mercy]"},args[1]);return;}
-  var window=new Window(args.Length==0);if(args.Length==2&&args[0]=="--ui-check"){try{window.Show();window.VerifyUi();File.WriteAllText(args[1],"PASS: 3 languages, locked filter, ID search, empty state, selection persistence, narrow layout, preview write prevention.");}catch(Exception e){File.WriteAllText(args[1],e.ToString());Environment.ExitCode=1;}finally{window.Close();}return;}
-  if(args.Length>=2&&(args[0]=="--preview"||args[0]=="--preview-live")) {
+  var window=new Window(args.Length==0);if(args.Length==2&&args[0]=="--ui-check"){try{window.Show();window.VerifyUi();File.WriteAllText(args[1],"PASS: 15 languages, menu selection, loading animation frames, locked filter, ID search, empty state, selection persistence, narrow layout, preview write prevention.");}catch(Exception e){File.WriteAllText(args[1],e.ToString());Environment.ExitCode=1;}finally{window.Close();}return;}
+  if(args.Length==3&&args[0]=="--live-ui-check"){window.Shown+=async(s,e)=>{try{await window.ReadOnlyPreview(args[2]);window.VerifyLiveMenus();File.WriteAllText(args[1],"PASS: connected Steam with real icons; 30 language and 30 filter menu selections; read-only.");}catch(Exception error){File.WriteAllText(args[1],error.ToString());Environment.ExitCode=1;}finally{window.Close();}};Application.Run(window);return;}if(args.Length>=2&&(args[0]=="--preview"||args[0]=="--preview-live")) {
    window.Shown+=async(s,e)=>{try{if(args[0]=="--preview-live")await window.ReadOnlyPreview(args[2],args.Length>=4?int.Parse(args[3]):0);else window.Preview(args.Length>=3?int.Parse(args[2]):0);await Task.Delay(300);using(var bitmap=new Bitmap(window.Width,window.Height)){window.DrawToBitmap(bitmap,new Rectangle(0,0,bitmap.Width,bitmap.Height));bitmap.Save(args[1]);}}catch(Exception error){File.WriteAllText(args[1]+".error.txt",error.ToString());Environment.ExitCode=1;}finally{window.Close();}};
   }
   Application.Run(window);
  }
 }
 }
+
+
+
 
