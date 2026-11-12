@@ -39,8 +39,9 @@ sealed class Achievement : IDisposable {
 class DarkButton : Button {
  protected override void OnPaint(PaintEventArgs e) {
   Color fill=Enabled?BackColor:Theme.Surface;
-  using(var brush=new SolidBrush(fill))e.Graphics.FillRectangle(brush,ClientRectangle);
-  using(var pen=new Pen(Focused?Theme.Gold:Theme.Border))e.Graphics.DrawRectangle(pen,0,0,Width-1,Height-1);
+  e.Graphics.Clear(Parent==null?Theme.Background:Parent.BackColor);
+  e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+  using(var shape=Theme.Round(Width-1,Height-1,12)){using(var brush=new SolidBrush(fill))e.Graphics.FillPath(brush,shape);using(var pen=new Pen(Focused?Theme.Gold:Theme.Border))e.Graphics.DrawPath(pen,shape);}
   TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,Enabled?ForeColor:Theme.Muted,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
  }
 }
@@ -53,7 +54,8 @@ sealed class DarkChoice : DarkButton {
  protected override void OnClick(EventArgs e){base.OnClick(e);var menu=new ContextMenuStrip{BackColor=Theme.Surface,ForeColor=Theme.Text,ShowImageMargin=false};for(int i=0;i<Items.Count;i++){int choice=i;var item=new ToolStripMenuItem(Items[i].ToString()){Checked=choice==index};item.Click+=(s,a)=>SelectedIndex=choice;menu.Items.Add(item);}menu.Closed+=(s,a)=>menu.Dispose();menu.Show(this,new Point(0,Height));}
 }
 static class Theme {
- public static readonly Color Background=Color.FromArgb(17,21,27),Surface=Color.FromArgb(27,33,41),Border=Color.FromArgb(48,57,68),Text=Color.FromArgb(237,236,230),Muted=Color.FromArgb(153,166,179),Gold=Color.FromArgb(214,183,120),Green=Color.FromArgb(127,193,160);
+ public static System.Drawing.Drawing2D.GraphicsPath Round(int w,int h,int r){var p=new System.Drawing.Drawing2D.GraphicsPath();p.AddArc(0,0,r,r,180,90);p.AddArc(w-r,0,r,r,270,90);p.AddArc(w-r,h-r,r,r,0,90);p.AddArc(0,h-r,r,r,90,90);p.CloseFigure();return p;}
+ public static readonly Color Background=Color.White,Surface=Color.FromArgb(249,249,249),Border=Color.FromArgb(229,229,229),Text=Color.FromArgb(32,33,35),Muted=Color.FromArgb(108,110,114),Gold=Color.FromArgb(38,39,41),Green=Color.FromArgb(20,126,93);
  public static Button Button(string text,bool primary=false){return new DarkButton{Text=text,AutoSize=false,Height=36,Width=130,FlatStyle=FlatStyle.Flat,BackColor=primary?Gold:Surface,ForeColor=primary?Background:Text,Cursor=Cursors.Hand,Margin=new Padding(4)};}
  public static Label Label(string text,int size,Color color){return new Label{Text=text,AutoSize=false,Font=new Font("Segoe UI",size),ForeColor=color,BackColor=Color.Transparent};}
 }
@@ -73,14 +75,25 @@ sealed class AchievementCard : Panel {
  }
 }
 sealed class Window : Form {
+ Panel sidebar; Button navAll,navLocked,navDone;Label navCaption;
+ void BuildSidebar(){
+  sidebar=new Panel{Dock=DockStyle.Left,Width=218,BackColor=Color.FromArgb(244,244,244),Padding=new Padding(16)};Controls.Add(sidebar);
+  var brand=Theme.Label("PBZ",22,Theme.Text);brand.Font=new Font("Segoe UI",22,FontStyle.Bold);brand.SetBounds(24,28,170,42);sidebar.Controls.Add(brand);
+  navCaption=Theme.Label("",9,Theme.Muted);navCaption.SetBounds(24,80,180,30);sidebar.Controls.Add(navCaption);
+  navAll=Theme.Button("");navLocked=Theme.Button("");navDone=Theme.Button("");int y=140;foreach(var button in new[]{navAll,navLocked,navDone}){button.SetBounds(16,y,186,42);button.BackColor=sidebar.BackColor;sidebar.Controls.Add(button);y+=50;}
+  navAll.Click+=(s,e)=>{search.Clear();filter.SelectedIndex=0;};navLocked.Click+=(s,e)=>{search.Clear();filter.SelectedIndex=1;};navDone.Click+=(s,e)=>{search.Clear();filter.SelectedIndex=2;};
+  var foot=Theme.Label("PBZ Achievement Tool\nv1.3 · Community edition",9,Theme.Muted);foot.Dock=DockStyle.Bottom;foot.Height=64;sidebar.Controls.Add(foot);
+  Resize+=(s,e)=>sidebar.Visible=ClientSize.Width>=1100;
+ }
+ void NavTranslate(){if(sidebar==null)return;navCaption.Text=Texts.T("YOUR WORKSPACE","你的工作区","你的工作區");navAll.Text=Texts.T("All achievements","全部成就","全部成就");navLocked.Text=Texts.T("To complete","待完成","待完成");navDone.Text=Texts.T("Completed","已完成","已完成");}
  readonly DarkChoice language=new DarkChoice(),filter=new DarkChoice();readonly TextBox path=new TextBox(),search=new TextBox();
  readonly Button browse=Theme.Button(""),connect=Theme.Button("",true),refresh=Theme.Button(""),selected=Theme.Button(""),all=Theme.Button("",true);
- readonly Label title=Theme.Label("",25,Theme.Text),subtitle=Theme.Label("",10,Theme.Muted),account=Theme.Label("",10,Theme.Muted),summary=Theme.Label("",13,Theme.Gold),status=Theme.Label("",9,Theme.Muted),searchLabel=Theme.Label("",10,Theme.Muted),empty=Theme.Label("",13,Theme.Muted);
+ readonly Label title=Theme.Label("",23,Theme.Text),subtitle=Theme.Label("",10,Theme.Muted),account=Theme.Label("",10,Theme.Muted),summary=Theme.Label("",13,Theme.Gold),status=Theme.Label("",9,Theme.Muted),searchLabel=Theme.Label("",10,Theme.Muted),empty=Theme.Label("",13,Theme.Muted);
  readonly FlowLayoutPanel cards=new FlowLayoutPanel();readonly Panel progress=new Panel();readonly ToolTip tips=new ToolTip();readonly Timer timer=new Timer();
  readonly List<Achievement> items=new List<Achievement>();readonly HashSet<string> chosen=new HashSet<string>();Session session;bool busy,rendering;bool preview;
  public Window(bool autoConnect=false) {
-  Text="PBZ Achievement Tool · 1.2";Size=new Size(1120,860);MinimumSize=new Size(820,700);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Theme.Background;ForeColor=Theme.Text;AutoScaleMode=AutoScaleMode.Dpi;
-  var root=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(28,22,28,16),ColumnCount=1,RowCount=9};Controls.Add(root);
+  Text="PBZ Achievement Tool · 1.3";Size=new Size(1360,880);MinimumSize=new Size(820,700);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Theme.Background;ForeColor=Theme.Text;AutoScaleMode=AutoScaleMode.Dpi;
+  var root=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(28,22,28,16),ColumnCount=1,RowCount=9};Controls.Add(root);BuildSidebar();
   foreach(int height in new[]{54,32,54,36,14,52})root.RowStyles.Add(new RowStyle(SizeType.Absolute,height));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,56));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
   var header=Row(170);title.Dock=DockStyle.Fill;header.Controls.Add(title,0,0);language.Items.AddRange(new object[]{"English","简体中文","繁體中文"});Style(language);header.Controls.Add(language,1,0);root.Controls.Add(header,0,0);subtitle.Dock=DockStyle.Fill;root.Controls.Add(subtitle,0,1);
   var connection=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=3,Padding=new Padding(0,7,0,0)};connection.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));connection.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,120));connection.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,150));Style(path);connection.Controls.Add(path,0,0);browse.Dock=connect.Dock=DockStyle.Fill;connection.Controls.Add(browse,1,0);connection.Controls.Add(connect,2,0);root.Controls.Add(connection,0,2);
@@ -99,8 +112,8 @@ sealed class Window : Form {
  }
  public async Task AutoConnect(){await Run(async()=>{string dll=Discovery.FindLibrary();if(dll==null)throw new Exception(Texts.T("Game installation not found. Select the game Steam library manually.","未找到游戏安装位置，请手动选择游戏的 Steam 库文件。","未找到遊戲安裝位置，請手動選擇遊戲的 Steam 程式庫。"));path.Text=dll;session=new Session();await session.Connect(dll);Reload();},Texts.T("Automatically connected to Steam.","已自动连接 Steam。","已自動連線 Steam。"));} static TableLayoutPanel Row(int right){var row=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Margin=new Padding(0)};row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,right));return row;}
  static void Style(Control c){c.Dock=DockStyle.Fill;c.Margin=new Padding(4);c.BackColor=Theme.Surface;c.ForeColor=Theme.Text;var text=c as TextBox;if(text!=null)text.BorderStyle=BorderStyle.FixedSingle;}
- void Translate(){
-  title.Text=Texts.T("PHANTOM BLADE ZERO","影之刃零","影之刃零");subtitle.Text=Texts.T("ACHIEVEMENT COLLECTION  /  Steam community tool","成就图鉴  /  Steam 社区工具","成就圖鑑  /  Steam 社群工具");browse.Text=Texts.T("Browse…","选择文件…","選擇檔案…");connect.Text=Texts.T("Connect Steam","连接 Steam","連線 Steam");refresh.Text=Texts.T("Refresh","刷新状态","重新整理");all.Text=Texts.T("Unlock all remaining","解锁全部未完成","解鎖全部未完成");searchLabel.Text=Texts.T("Search","搜索成就","搜尋成就");
+ void Translate(){NavTranslate();
+  title.Text=Texts.T("Achievements","成就图鉴","成就圖鑑");subtitle.Text=Texts.T("Phantom Blade Zero · Your collection, at a glance.","影之刃零 · 浏览成就，追踪每一步进展。","影之刃零 · 瀏覽成就，追蹤每一步進展。");browse.Text=Texts.T("Browse…","选择文件…","選擇檔案…");connect.Text=Texts.T("Connect Steam","连接 Steam","連線 Steam");refresh.Text=Texts.T("Refresh","刷新状态","重新整理");all.Text=Texts.T("Unlock all remaining","解锁全部未完成","解鎖全部未完成");searchLabel.Text=Texts.T("Search","搜索成就","搜尋成就");
   rendering=true;int index=filter.SelectedIndex;filter.Items.Clear();filter.Items.AddRange(new object[]{Texts.T("All achievements","全部成就","全部成就"),Texts.T("Locked only","仅未解锁","僅未解鎖"),Texts.T("Unlocked only","仅已解锁","僅已解鎖")});filter.SelectedIndex=Math.Max(0,index);rendering=false;
   tips.SetToolTip(path,Texts.T("Choose steam_api64.dll from your game installation.","选择游戏安装目录中的 steam_api64.dll。","選擇遊戲安裝目錄中的 steam_api64.dll。"));status.Text=Texts.T("Choose your game library, then connect Steam to load achievement cards.","选择游戏库文件并连接 Steam，即可加载成就卡片。","選擇遊戲程式庫並連線 Steam，即可載入成就卡片。");UpdateSummary();
  }
@@ -133,4 +146,5 @@ sealed class Window : Form {
  async Task sessionConnect(string dll){session=new Session();await session.Connect(dll);Reload();for(int i=0;i<15&&items.Any(x=>x.Image==null);i++){session.Tick();foreach(var item in items.Where(x=>x.Image==null))item.Image=session.Icon(item.Id);await Task.Delay(200);}DrawCards();}
 }
 }
+
 

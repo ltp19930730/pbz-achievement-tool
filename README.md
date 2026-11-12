@@ -65,3 +65,7 @@ MIT for this project's source. Steam and Phantom Blade Zero belong to their resp
 ## v1.2 — Automatic connection
 
 On normal startup, the tool reads the Steam registry location and libraryfolders.vdf, locates appmanifest_4115450.acf, and connects using the installed game's Steam DLL. No DLL selection is needed when discovery succeeds. Steam must already be running and signed in. If discovery or connection fails, manual Browse/Connect remains available. Startup only reads achievements; it never unlocks them. Diagnostic and preview modes do not auto-connect.
+
+## v1.3 — Minimal light interface
+
+A ChatGPT-inspired light workspace with left navigation, rounded buttons and neutral colors. The sidebar collapses on narrow windows. Steam auto-connect, achievement cards, guides and all three languages remain available. This is an independent PBZ community tool, not an OpenAI product.
