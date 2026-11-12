@@ -1,0 +1,6 @@
+dist/
+*.dll
+*.sav
+*.log
+*.user
+steam_appid.txt
