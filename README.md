@@ -61,3 +61,7 @@ Only App ID `4115450`, achievement IDs `ACH_001`–`ACH_066`, SteamUserStats v01
 
 MIT for this project's source. Steam and Phantom Blade Zero belong to their respective owners. This is an independent community utility, not an official product. Game DLLs are supplied by the user's own installation and are not redistributed.
 
+
+## v1.2 — Automatic connection
+
+On normal startup, the tool reads the Steam registry location and libraryfolders.vdf, locates appmanifest_4115450.acf, and connects using the installed game's Steam DLL. No DLL selection is needed when discovery succeeds. Steam must already be running and signed in. If discovery or connection fails, manual Browse/Connect remains available. Startup only reads achievements; it never unlocks them. Diagnostic and preview modes do not auto-connect.

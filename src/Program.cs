@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -55,13 +55,13 @@ sealed partial class Session : IDisposable {
 
 static class Program {
  [STAThread] static void Main(string[] args) {
-  if(args.Length==3&&args[0]=="--check") {
+  if(args.Length==2&&args[0]=="--discover"){File.WriteAllText(args[1],Discovery.FindLibrary()??"NOT_FOUND");return;}if(args.Length==3&&args[0]=="--check") {
    try {using(var session=new Session()) {session.Connect(args[1]).GetAwaiter().GetResult();int count=0,icons=0;for(int i=1;i<=66;i++){string id="ACH_"+i.ToString("000");if(session.Read(id))count++;using(var icon=session.Icon(id))if(icon!=null)icons++;}File.WriteAllText(args[2],"Read-only Steam check passed. Unlocked="+count+"/66; icons="+icons);}}
    catch(Exception e){File.WriteAllText(args[2],e.ToString());Environment.ExitCode=1;}return;
   }
   Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
   if(args.Length==3&&args[0]=="--preview-guide"){Texts.Language=int.Parse(args[2]);Guides.Show(null,new Achievement{Id="ACH_038",Name="The Healer’s Legacy",Description="Complete [Flesh Lily], [Apprentice Healer], and [A Healer’s Mercy]"},args[1]);return;}
-  var window=new Window();if(args.Length==2&&args[0]=="--ui-check"){try{window.Show();window.VerifyUi();File.WriteAllText(args[1],"PASS: 3 languages, locked filter, ID search, empty state, selection persistence, narrow layout, preview write prevention.");}catch(Exception e){File.WriteAllText(args[1],e.ToString());Environment.ExitCode=1;}finally{window.Close();}return;}
+  var window=new Window(args.Length==0);if(args.Length==2&&args[0]=="--ui-check"){try{window.Show();window.VerifyUi();File.WriteAllText(args[1],"PASS: 3 languages, locked filter, ID search, empty state, selection persistence, narrow layout, preview write prevention.");}catch(Exception e){File.WriteAllText(args[1],e.ToString());Environment.ExitCode=1;}finally{window.Close();}return;}
   if(args.Length>=2&&(args[0]=="--preview"||args[0]=="--preview-live")) {
    window.Shown+=async(s,e)=>{try{if(args[0]=="--preview-live")await window.ReadOnlyPreview(args[2],args.Length>=4?int.Parse(args[3]):0);else window.Preview(args.Length>=3?int.Parse(args[2]):0);await Task.Delay(300);using(var bitmap=new Bitmap(window.Width,window.Height)){window.DrawToBitmap(bitmap,new Rectangle(0,0,bitmap.Width,bitmap.Height));bitmap.Save(args[1]);}}catch(Exception error){File.WriteAllText(args[1]+".error.txt",error.ToString());Environment.ExitCode=1;}finally{window.Close();}};
   }
@@ -69,3 +69,4 @@ static class Program {
  }
 }
 }
+

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -78,8 +78,8 @@ sealed class Window : Form {
  readonly Label title=Theme.Label("",25,Theme.Text),subtitle=Theme.Label("",10,Theme.Muted),account=Theme.Label("",10,Theme.Muted),summary=Theme.Label("",13,Theme.Gold),status=Theme.Label("",9,Theme.Muted),searchLabel=Theme.Label("",10,Theme.Muted),empty=Theme.Label("",13,Theme.Muted);
  readonly FlowLayoutPanel cards=new FlowLayoutPanel();readonly Panel progress=new Panel();readonly ToolTip tips=new ToolTip();readonly Timer timer=new Timer();
  readonly List<Achievement> items=new List<Achievement>();readonly HashSet<string> chosen=new HashSet<string>();Session session;bool busy,rendering;bool preview;
- public Window() {
-  Text="PBZ Achievement Tool · 1.1";Size=new Size(1120,860);MinimumSize=new Size(820,700);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Theme.Background;ForeColor=Theme.Text;AutoScaleMode=AutoScaleMode.Dpi;
+ public Window(bool autoConnect=false) {
+  Text="PBZ Achievement Tool · 1.2";Size=new Size(1120,860);MinimumSize=new Size(820,700);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10);BackColor=Theme.Background;ForeColor=Theme.Text;AutoScaleMode=AutoScaleMode.Dpi;
   var root=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(28,22,28,16),ColumnCount=1,RowCount=9};Controls.Add(root);
   foreach(int height in new[]{54,32,54,36,14,52})root.RowStyles.Add(new RowStyle(SizeType.Absolute,height));root.RowStyles.Add(new RowStyle(SizeType.Percent,100));root.RowStyles.Add(new RowStyle(SizeType.Absolute,56));root.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
   var header=Row(170);title.Dock=DockStyle.Fill;header.Controls.Add(title,0,0);language.Items.AddRange(new object[]{"English","简体中文","繁體中文"});Style(language);header.Controls.Add(language,1,0);root.Controls.Add(header,0,0);subtitle.Dock=DockStyle.Fill;root.Controls.Add(subtitle,0,1);
@@ -95,9 +95,9 @@ sealed class Window : Form {
   refresh.Click+=async(s,e)=>await Run(()=>{Reload();return Task.FromResult(0);},Texts.T("Achievements refreshed.","成就状态已刷新。","成就狀態已重新整理。"));
   selected.Click+=async(s,e)=>await Submit(chosen.ToList());all.Click+=async(s,e)=>await Submit(items.Where(x=>!x.Done).Select(x=>x.Id).ToList());
   timer.Interval=800;timer.Tick+=(s,e)=>{if(busy||session==null||!session.Connected)return;try{session.Tick();bool changed=false;foreach(var item in items.Where(x=>x.Image==null)){item.Image=session.Icon(item.Id);changed|=item.Image!=null;}if(changed)DrawCards();}catch{timer.Stop();}};timer.Start();
-  FormClosing+=(s,e)=>{if(busy)e.Cancel=true;};FormClosed+=(s,e)=>{timer.Dispose();ClearItems();if(session!=null)session.Dispose();tips.Dispose();};Translate();EnableControls();
+  FormClosing+=(s,e)=>{if(busy)e.Cancel=true;};FormClosed+=(s,e)=>{timer.Dispose();ClearItems();if(session!=null)session.Dispose();tips.Dispose();};Translate();EnableControls();if(autoConnect)Shown+=async(s,e)=>await AutoConnect();
  }
- static TableLayoutPanel Row(int right){var row=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Margin=new Padding(0)};row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,right));return row;}
+ public async Task AutoConnect(){await Run(async()=>{string dll=Discovery.FindLibrary();if(dll==null)throw new Exception(Texts.T("Game installation not found. Select the game Steam library manually.","未找到游戏安装位置，请手动选择游戏的 Steam 库文件。","未找到遊戲安裝位置，請手動選擇遊戲的 Steam 程式庫。"));path.Text=dll;session=new Session();await session.Connect(dll);Reload();},Texts.T("Automatically connected to Steam.","已自动连接 Steam。","已自動連線 Steam。"));} static TableLayoutPanel Row(int right){var row=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,Margin=new Padding(0)};row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,right));return row;}
  static void Style(Control c){c.Dock=DockStyle.Fill;c.Margin=new Padding(4);c.BackColor=Theme.Surface;c.ForeColor=Theme.Text;var text=c as TextBox;if(text!=null)text.BorderStyle=BorderStyle.FixedSingle;}
  void Translate(){
   title.Text=Texts.T("PHANTOM BLADE ZERO","影之刃零","影之刃零");subtitle.Text=Texts.T("ACHIEVEMENT COLLECTION  /  Steam community tool","成就图鉴  /  Steam 社区工具","成就圖鑑  /  Steam 社群工具");browse.Text=Texts.T("Browse…","选择文件…","選擇檔案…");connect.Text=Texts.T("Connect Steam","连接 Steam","連線 Steam");refresh.Text=Texts.T("Refresh","刷新状态","重新整理");all.Text=Texts.T("Unlock all remaining","解锁全部未完成","解鎖全部未完成");searchLabel.Text=Texts.T("Search","搜索成就","搜尋成就");
@@ -133,3 +133,4 @@ sealed class Window : Form {
  async Task sessionConnect(string dll){session=new Session();await session.Connect(dll);Reload();for(int i=0;i<15&&items.Any(x=>x.Image==null);i++){session.Tick();foreach(var item in items.Where(x=>x.Image==null))item.Image=session.Icon(item.Id);await Task.Delay(200);}DrawCards();}
 }
 }
+
